@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Realistic Black Hole & Spatial Audio</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        body, html {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; /* Prevents mobile scrolling */
+        }
+
+        canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+
+        /* Enhanced Close / Exit Button */
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(10, 15, 30, 0.6);
+            border: 2px solid rgba(255, 100, 50, 0.6);
+            color: #ff8c42;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 0 20px rgba(255, 100, 50, 0.3);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .close-btn:hover, .close-btn:active {
+            background: rgba(255, 100, 50, 0.25);
+            transform: scale(1.15) rotate(90deg);
+            box-shadow: 0 0 30px rgba(255, 100, 50, 0.8);
+            color: #ffffff;
+        }
+
+        /* Start Overlay */
+        .start-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 1, 8, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 60;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+        h1 {
+            font-size: 3.5rem;
+            color: #ffffff;
+            text-shadow: 0 0 20px #ff6a00, 0 0 40px #ff0000;
+            letter-spacing: 6px;
+            margin-bottom: 15px;
+            font-weight: 800;
+        }
+        p {
+            color: #ffccaa;
+            font-size: 1.2rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(255, 204, 170, 0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="startOverlay" class="start-overlay">
+        <h1>EVENT HORIZON</h1>
+        <p>Tap or Click to Enter Orbit</p>
+    </div>
+
+    <!-- Cross Button for PC and Mobile -->
+    <button id="closeBtn" class="close-btn" title="Exit Simulation">✕</button>
+    <canvas id="glcanvas"></canvas>
+
+    <!-- Audio Element -->
+    <audio id="bgMusic">
+        <source src="C:\Users\karmm\Downloads\Python cont\adas-web-system\leberch-space-587944.mp3" type="audio/mpeg">
+    </audio>
+
+<script>
+    // ==========================================
+    // MODULE 1: SHADER DEFINITIONS
+    // ==========================================
+
+    const vertexShaderSource = `
+        attribute vec2 a_position;
+        void main() {
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    `;
+
+    // Schwarzschild metric raytracer with Lensed Warp Starfield & Speed Lines
+    const fragmentShaderSource = `
+        precision highp float;
+
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec2 u_mouse;
+
+        // Hash and procedural noise for the accretion gas
+        float hash(float n) { return fract(sin(n)*43758.5453); }
+        float noise(vec3 x) {
+            vec3 p = floor(x);
+            vec3 f = fract(x);
+            f = f*f*(3.0-2.0*f);
+            float n = p.x + p.y*57.0 + 113.0*p.z;
+            return mix(mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
+                           mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y),
+                       mix(mix( hash(n+113.0), hash(n+114.0),f.x),
+                           mix( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
+        }
+
+        // Fractional Brownian Motion
+        float fbm(vec3 p) {
+            float f = 0.0;
+            float amp = 0.5;
+            for(int i=0; i<4; i++) {
+                f += amp * noise(p);
+                p *= 2.02;
+                amp *= 0.5;
+            }
+            return f;
+        }
+
+        // Dynamic Moving Starfield & Speed Lines
+        vec3 getSky(vec3 dir, float time, vec3 travelDir) {
+            // 1. Static Milky Way background stars
+            float n = hash(dot(dir, vec3(17.0, 39.0, 83.0)));
+            float staticStar = smoothstep(0.99, 1.0, n) * 2.0;
+            float glow = max(0.0, 1.0 - abs(dir.y)*2.5) * 0.15;
+            vec3 col = vec3(staticStar) * vec3(0.85, 0.92, 1.0) + vec3(0.05, 0.08, 0.15) * glow;
+
+            // 2. Warp Speed Lines / Shooting Stars
+            vec3 up = vec3(0.0, 1.0, 0.0);
+            if (abs(dot(travelDir, up)) > 0.9) up = vec3(1.0, 0.0, 0.0);
+            vec3 right = normalize(cross(travelDir, up));
+            up = cross(right, travelDir);
+
+            float forwardDot = dot(dir, travelDir);
+            vec2 uv = vec2(dot(dir, right), dot(dir, up)) / (abs(forwardDot) + 0.001);
+
+            float warpTime = time * 5.0; // Warp speed multiplier
+            vec3 warpCol = vec3(0.0);
+
+            // 6 layers of depth for streak lines
+            for(float i = 0.0; i < 6.0; i++) {
+                float fractZ = fract(warpTime + i * 0.166);
+                float depth = 4.0 - fractZ * 3.8;
+
+                vec2 p = uv * depth;
+                p += vec2(i * 12.34, i * 7.89);
+
+                vec2 id = floor(p);
+                vec2 f = fract(p) - 0.5;
+
+                float rand = hash(id.x * 21.53 + id.y * 43.19 + i);
+                if (rand > 0.94) { // Star density
+                    vec2 dir2D = normalize(uv + vec2(0.0001));
+
+                    float d = abs(dot(f, vec2(-dir2D.y, dir2D.x)));
+                    float len = length(f);
+
+                    float intensity = smoothstep(0.04, 0.0, d) * smoothstep(0.7, 0.0, len);
+                    float core = smoothstep(0.07, 0.0, length(f)) * 2.0;
+
+                    float fade = smoothstep(0.0, 0.25, fractZ) * smoothstep(1.0, 0.65, fractZ);
+
+                    vec3 starColor = mix(vec3(0.7, 0.9, 1.0), vec3(1.0, 1.0, 1.0), hash(rand * 15.0));
+                    warpCol += starColor * (intensity + core) * fade * 60.0;
+                }
+            }
+
+            return col + warpCol;
+        }
+
+        void main() {
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+            vec2 mouse = vec2(u_mouse.x / u_resolution.x, u_mouse.y / u_resolution.y) - 0.5;
+
+            // Camera System setup (Orbital mechanics)
+            float camDist = 7.0;
+            float camAngle = -u_time * 0.03 + mouse.x * 6.0;
+            float camHeight = 0.3 + mouse.y * 6.0;
+            vec3 camPos = vec3(sin(camAngle)*camDist, camHeight, cos(camAngle)*camDist);
+
+            vec3 lookAt = vec3(0.0, 0.0, 0.0);
+            vec3 forward = normalize(lookAt - camPos);
+            vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), forward));
+            vec3 up = cross(forward, right);
+
+            vec3 rayDir = normalize(forward + uv.x * right + uv.y * up);
+            vec3 rayPos = camPos;
+
+            // Physics Constants
+            float mass = 0.5;
+            float rs = 2.0 * mass; // Schwarzschild radius
+            float stepSize = 0.09;
+
+            // Accretion Disk bounds
+            float diskInner = rs * 1.3;
+            float diskOuter = rs * 6.0;
+
+            vec3 col = vec3(0.0);
+            vec3 diskGlow = vec3(0.0);
+            float transmittance = 1.0;
+
+            // Raymarching Geodesics (140 steps)
+            for(int i = 0; i < 140; i++) {
+                float r2 = dot(rayPos, rayPos);
+                float r = sqrt(r2);
+
+                // 1. GRAVITY BENDING (Euler integration of null-geodesic)
+                vec3 accel = -normalize(rayPos) * (mass / r2);
+                rayDir = normalize(rayDir + accel * stepSize);
+                rayPos += rayDir * stepSize;
+
+                // 2. EVENT HORIZON TRAP
+                if (r < rs * 0.95) {
+                    col = vec3(0.0);
+                    break;
+                }
+
+                // 3. ACCRETION DISK (Volumetric realistic gas)
+                if (abs(rayPos.y) < 0.15 && r > diskInner && r < diskOuter) {
+                    float alpha = smoothstep(diskOuter, diskInner + 0.5, r) * smoothstep(diskInner, diskInner + 0.3, r);
+                    alpha *= smoothstep(0.15, 0.0, abs(rayPos.y));
+
+                    float angle = atan(rayPos.z, rayPos.x);
+
+                    vec3 noiseCoord = vec3(angle * 4.0 - u_time * 2.0, r * 3.5, u_time * 0.3);
+                    float gasDetail = fbm(noiseCoord);
+
+                    // RELATIVISTIC DOPPLER BEAMING
+                    vec3 velocity = normalize(vec3(-rayPos.z, 0.0, rayPos.x));
+                    float doppler = 1.0 + dot(rayDir, velocity) * 1.8;
+
+                    float density = alpha * gasDetail * 0.5 * doppler;
+
+                    float heat = (diskOuter - r) / (diskOuter - diskInner);
+                    vec3 baseColor = mix(vec3(1.0, 0.2, 0.01), vec3(1.0, 0.9, 0.8), pow(heat, 1.5));
+                    vec3 shiftColor = mix(vec3(1.0, 0.1, 0.0), vec3(0.4, 0.8, 1.0), doppler * 0.3);
+
+                    vec3 c = baseColor * shiftColor * density * 3.5;
+
+                    diskGlow += c * transmittance;
+                    transmittance *= (1.0 - density * 0.6);
+
+                    if (transmittance <= 0.01) break;
+                }
+
+                // 4. Lensed Moving Starfield (Warp Speed Background) - Threshold set to 13.0 so rays easily escape
+                if (r > 13.0) {
+                    col = getSky(rayDir, u_time, forward) * transmittance;
+                    break;
+                }
+            }
+
+            col += diskGlow;
+
+            // Cinematic ACES-like Tonemapping & Gamma Correction
+            col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
+            col = pow(col, vec3(1.0/2.2));
+
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `;
+
+    // ==========================================
+    // MODULE 2: WEBGL ENGINE SETUP
+    // ==========================================
+    class Engine {
+        constructor(canvasId) {
+            this.canvas = document.getElementById(canvasId);
+            this.gl = this.canvas.getContext('webgl');
+
+            this.mouseX = this.canvas.width / 2;
+            this.mouseY = this.canvas.height / 2;
+            this.targetMouseX = this.mouseX;
+            this.targetMouseY = this.mouseY;
+
+            this.init();
+            this.setupEvents();
+        }
+
+        compileShader(type, source) {
+            const shader = this.gl.createShader(type);
+            this.gl.shaderSource(shader, source);
+            this.gl.compileShader(shader);
+            return shader;
+        }
+
+        init() {
+            const vs = this.compileShader(this.gl.VERTEX_SHADER, vertexShaderSource);
+            const fs = this.compileShader(this.gl.FRAGMENT_SHADER, fragmentShaderSource);
+            this.program = this.gl.createProgram();
+            this.gl.attachShader(this.program, vs);
+            this.gl.attachShader(this.program, fs);
+            this.gl.linkProgram(this.program);
+            this.gl.useProgram(this.program);
+
+            this.positionBuffer = this.gl.createBuffer();
+            this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.positionBuffer);
+            this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array([
+                -1, -1,  1, -1, -1,  1,
+                -1,  1,  1, -1,  1,  1,
+            ]), this.gl.STATIC_DRAW);
+
+            const posAttr = this.gl.getAttribLocation(this.program, "a_position");
+            this.gl.enableVertexAttribArray(posAttr);
+            this.gl.vertexAttribPointer(posAttr, 2, this.gl.FLOAT, false, 0, 0);
+
+            this.uResolution = this.gl.getUniformLocation(this.program, "u_resolution");
+            this.uTime = this.gl.getUniformLocation(this.program, "u_time");
+            this.uMouse = this.gl.getUniformLocation(this.program, "u_mouse");
+
+            this.resize();
+        }
+
+        setupEvents() {
+            window.addEventListener('resize', () => this.resize());
+            const updateMouse = (x, y) => { this.targetMouseX = x; this.targetMouseY = y; };
+            window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
+            window.addEventListener('touchmove', e => updateMouse(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+        }
+
+        resize() {
+            this.canvas.width = window.innerWidth;
+            this.canvas.height = window.innerHeight;
+            this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+        }
+
+        render(time) {
+            this.mouseX += (this.targetMouseX - this.mouseX) * 0.05;
+            this.mouseY += (this.targetMouseY - this.mouseY) * 0.05;
+
+            this.gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
+            this.gl.uniform1f(this.uTime, time * 0.001);
+            this.gl.uniform2f(this.uMouse, this.mouseX, this.mouseY);
+
+            this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
+            requestAnimationFrame((t) => this.render(t));
+        }
+    }
+
+    const engine = new Engine('glcanvas');
+    engine.render(0);
+
+    // ==========================================
+    // MODULE 3: AUDIO & LIFECYCLE MANAGEMENT
+    // ==========================================
+
+    const startOverlay = document.getElementById('startOverlay');
+    const bgMusic = document.getElementById('bgMusic');
+
+    bgMusic.volume = 1.0;
+    let isExperienceActive = false;
+
+    startOverlay.addEventListener('click', () => {
+        isExperienceActive = true;
+        bgMusic.currentTime = 10;
+        bgMusic.play().catch(e => console.log("Audio play prevented:", e));
+        startOverlay.classList.add('hidden');
+    });
+
+    bgMusic.addEventListener('ended', function() {
+        this.currentTime = 10;
+        this.play();
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (!isExperienceActive) return;
+
+        if (document.hidden) {
+            bgMusic.pause();
+        } else {
+            bgMusic.play().catch(e => console.log("Audio resume prevented:", e));
+        }
+    });
+
+    const exitApp = () => {
+        bgMusic.pause();
+        isExperienceActive = false;
+        window.close();
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#ff6a00;font-size:1.5rem;letter-spacing:2px;font-family:sans-serif;text-align:center;padding:20px;">Simulation Closed.<br>You may safely close this tab.</div>';
+    };
+
+    document.getElementById('closeBtn').addEventListener('click', exitApp);
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') exitApp(); });
+
+</script>
+</body>
+</html>
