@@ -394,11 +394,26 @@
     bgMusic.volume = 1.0;
     let isExperienceActive = false;
 
-    startOverlay.addEventListener('click', () => {
+    startOverlay.addEventListener('click', async () => {
         isExperienceActive = true;
         bgMusic.currentTime = 10;
         bgMusic.play().catch(e => console.log("Audio play prevented:", e));
         startOverlay.classList.add('hidden');
+
+        // Force Fullscreen & Landscape Orientation Lock on Mobile
+        try {
+            if (document.documentElement.requestFullscreen) {
+                await document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) { /* Safari fallback */
+                await document.documentElement.webkitRequestFullscreen();
+            }
+
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape');
+            }
+        } catch (err) {
+            console.log("Fullscreen or orientation lock denied/unsupported:", err);
+        }
     });
 
     bgMusic.addEventListener('ended', function() {
