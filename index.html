@@ -311,7 +311,7 @@
 
 <script>
     // =========================================================================
-    // PLATFORM DETECTION: 9.5 Rs DEFAULT FOR ANDROID/MOBILE, 8.0 Rs FOR PC
+    // PLATFORM DETECTION: 8.7 Rs DEFAULT FOR ANDROID/MOBILE, 8.0 Rs FOR PC
     // =========================================================================
     function isAndroidOrMobileDevice() {
         const ua = navigator.userAgent || '';
@@ -505,7 +505,7 @@
             this.targetMouseX = this.mouseX;
             this.targetMouseY = this.mouseY;
 
-            // 9.5 Rs default for Android/Mobile, 8.0 Rs default for PC
+            // 8.7 Rs default for Android/Mobile, 8.0 Rs default for PC
             this.defaultDist = this.getDefaultDist();
             this.camDist = this.defaultDist;
             this.targetCamDist = this.defaultDist;
@@ -522,7 +522,7 @@
         }
 
         getDefaultDist() {
-            return isAndroidOrMobileDevice() ? 9.5 : 8.0;
+            return isAndroidOrMobileDevice() ? 8.7 : 8.0;
         }
 
         compileShader(type, source) {
@@ -860,7 +860,7 @@
     function resetCameraOrbit() {
         engine.targetMouseX = engine.canvas.width * 0.5;
         engine.targetMouseY = engine.canvas.height * 0.5;
-        // Resets to 9.5 Rs on Android/Mobile, 8.0 Rs on PC
+        // Resets to 8.7 Rs on Android/Mobile, 8.0 Rs on PC
         engine.setZoom(engine.getDefaultDist());
     }
 
