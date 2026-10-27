@@ -1,126 +1,242 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Realistic Black Hole & Spatial Audio</title>
+    <title>RoadSense ADAS // Singularity Telemetry & Event Horizon</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500;600;700&display=swap');
+
+        :root {
+            --bg-canvas: #04060a;
+            --surface-primary: rgba(15, 19, 28, 0.78);
+            --surface-recessed: rgba(9, 11, 17, 0.85);
+            --border-subtle: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
         body, html {
             width: 100vw;
-            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
-            background: #000000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Prevents mobile scrolling */
+            background: var(--bg-canvas);
+            color: #e2e8f0;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            touch-action: none;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .mono-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
         }
 
         canvas {
             display: block;
             width: 100vw;
-            height: 100vh;
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 10;
-        }
-
-        /* Enhanced Close / Exit Button */
-        .close-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 50px;
-            height: 50px;
-            background: rgba(10, 15, 30, 0.6);
-            border: 2px solid rgba(255, 100, 50, 0.6);
-            color: #ff8c42;
-            border-radius: 50%;
-            font-size: 1.5rem;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            z-index: 50;
-            box-shadow: 0 0 20px rgba(255, 100, 50, 0.3);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .close-btn:hover, .close-btn:active {
-            background: rgba(255, 100, 50, 0.25);
-            transform: scale(1.15) rotate(90deg);
-            box-shadow: 0 0 30px rgba(255, 100, 50, 0.8);
-            color: #ffffff;
-        }
-
-        /* Start Overlay */
-        .start-overlay {
+            height: 100dvh;
             position: fixed;
             inset: 0;
-            background: rgba(2, 1, 8, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            z-index: 60;
-            cursor: pointer;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            transition: opacity 0.8s ease, visibility 0.8s ease;
+            z-index: 1;
+            cursor: grab;
         }
-        h1 {
-            font-size: 3.5rem;
+        canvas:active {
+            cursor: grabbing;
+        }
+
+        .glass-panel {
+            background: var(--surface-primary);
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.85);
+        }
+
+        .recessed-pill {
+            background: var(--surface-recessed);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65);
+        }
+
+        .btn-launch {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
             color: #ffffff;
-            text-shadow: 0 0 20px #ff6a00, 0 0 40px #ff0000;
-            letter-spacing: 6px;
-            margin-bottom: 15px;
-            font-weight: 800;
+            font-weight: 700;
+            border: 1px solid rgba(251, 146, 60, 0.6);
+            box-shadow: 0 4px 20px rgba(249, 115, 22, 0.35);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        p {
-            color: #ffccaa;
-            font-size: 1.2rem;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(255, 204, 170, 0.5);
-            animation: pulse 2s infinite;
+        .btn-launch:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 26px rgba(249, 115, 22, 0.55);
+            filter: brightness(1.08);
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
+        @keyframes eqBounce {
+            0%, 100% { height: 4px; }
+            50% { height: 13px; }
         }
+        .eq-1 { animation: eqBounce 0.55s ease-in-out infinite; }
+        .eq-2 { animation: eqBounce 0.42s ease-in-out infinite 0.15s; }
+        .eq-3 { animation: eqBounce 0.65s ease-in-out infinite 0.28s; }
+        .eq-paused { animation: none !important; height: 4px !important; }
 
-        .hidden {
+        .hud-transition {
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .hud-hidden-top {
             opacity: 0;
-            visibility: hidden;
+            transform: translate3d(0, -24px, 0);
+            pointer-events: none;
+        }
+        .hud-hidden-bottom {
+            opacity: 0;
+            transform: translate3d(0, 24px, 0);
             pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="startOverlay" class="start-overlay">
-        <h1>EVENT HORIZON</h1>
-        <p>Tap or Click to Enter Orbit</p>
-    </div>
-
-    <!-- Cross Button for PC and Mobile -->
-    <button id="closeBtn" class="close-btn" title="Exit Simulation">✕</button>
+    <!-- WEBGL SINGULARITY CANVAS -->
     <canvas id="glcanvas"></canvas>
 
-    <!-- Audio Element -->
-    <audio id="bgMusic" loop>
+    <!-- SPATIAL AUDIO ENGINE -->
+    <audio id="bgMusic" preload="auto" loop>
         <source src="leberch-space-440026.mp3" type="audio/mpeg">
+        <source src="/media/leberch-space-440026.mp3" type="audio/mpeg">
     </audio>
 
-<script>
-    // ==========================================
-    // MODULE 1: SHADER DEFINITIONS
-    // ==========================================
+    <!-- START OVERLAY (ALWAYS SHOWN ON ENTRY ACROSS PC, MOBILE & REDIRECTS) -->
+    <div id="startOverlay" style="display: flex;" onclick="launchSingularityExperience()" class="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-5 text-center cursor-pointer backdrop-blur-md transition-opacity duration-500">
+        <div class="glass-panel p-6 sm:p-8 rounded-2xl max-w-md w-full border border-orange-500/40 space-y-4">
+            <div class="w-14 h-14 rounded-full bg-orange-500/15 border border-orange-500/40 flex items-center justify-center mx-auto text-2xl shadow-[0_0_24px_rgba(249,115,22,0.3)]">
+                🕳️
+            </div>
+            <span class="inline-block px-2.5 py-0.5 text-[11px] mono-num font-bold uppercase bg-orange-500/15 text-orange-300 border border-orange-500/30 rounded">
+                ROADSENSE // EASTER EGG PORTAL
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                EVENT HORIZON
+            </h1>
+            <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+                Real-time Schwarzschild null-geodesic raytracer with relativistic Doppler beaming and spatial audio.
+            </p>
+            <div class="recessed-pill p-2.5 rounded-xl text-[11px] mono-num text-gray-400 space-y-1">
+                <div>• <strong class="text-gray-200">Orbit:</strong> Drag / Touch Move</div>
+                <div>• <strong class="text-gray-200">Zoom:</strong> Scroll Wheel / Pinch</div>
+            </div>
+            <button type="button" class="btn-launch w-full py-3 rounded-xl text-xs uppercase tracking-wider cursor-pointer">
+                ▶ Enter Singularity Orbit
+            </button>
+        </div>
+    </div>
 
+    <!-- TOP TELEMETRY BAR (NON-OVERLAPPING ON MOBILE & PC) -->
+    <header id="topHudBar" class="fixed top-0 inset-x-0 z-30 p-2.5 sm:p-4 pointer-events-none hud-transition">
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+            
+            <!-- Brand & Live Telemetry Pill -->
+            <div class="glass-panel px-3 py-2 rounded-xl flex items-center justify-between sm:justify-start gap-2.5 pointer-events-auto">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="w-2.5 h-2.5 rounded-full bg-orange-400 animate-pulse shrink-0"></span>
+                    <span class="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                        SINGULARITY // GARGANTUA
+                    </span>
+                    <span id="fpsCounter" class="px-2 py-0.5 text-[10px] mono-num font-semibold bg-orange-500/15 text-orange-300 border border-orange-500/30 rounded shrink-0">
+                        60 FPS
+                    </span>
+                </div>
+
+                <!-- Mobile Quick Exit Button -->
+                <button type="button" onclick="exitSimulation()" class="sm:hidden px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition cursor-pointer shrink-0">
+                    ✕ Exit
+                </button>
+            </div>
+
+            <!-- Right Controls: Audio Clock, Mute, Hide HUD & Desktop Exit -->
+            <div class="glass-panel px-3 py-1.5 rounded-xl flex items-center justify-between sm:justify-end gap-2 pointer-events-auto">
+                <div class="flex items-center gap-2 px-2.5 py-1 rounded-lg recessed-pill">
+                    <div class="flex items-end gap-0.5 h-3">
+                        <span class="eq-bar w-0.5 sm:w-1 bg-orange-400 eq-1 eq-paused rounded-full"></span>
+                        <span class="eq-bar w-0.5 sm:w-1 bg-amber-300 eq-2 eq-paused rounded-full"></span>
+                        <span class="eq-bar w-0.5 sm:w-1 bg-orange-400 eq-3 eq-paused rounded-full"></span>
+                    </div>
+                    <span id="audioClock" class="mono-num text-[11px] text-gray-200">00:00</span>
+                    <button type="button" id="muteBtn" onclick="toggleAudioMute()" class="text-[11px] text-orange-300 hover:text-orange-200 font-semibold ml-1 cursor-pointer">
+                        Mute
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <button type="button" onclick="toggleHudVisibility()" class="px-2.5 py-1 rounded-lg recessed-pill hover:border-gray-500 text-[11px] font-semibold text-gray-200 transition cursor-pointer" title="Toggle HUD (H)">
+                        👁️ Hide HUD
+                    </button>
+                    <button type="button" onclick="exitSimulation()" class="hidden sm:inline-flex px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition cursor-pointer">
+                        ✕ Exit
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- FLOATING RESTORE HUD BUTTON (ONLY VISIBLE WHEN HUD IS HIDDEN) -->
+    <button id="restoreHudBtn" type="button" onclick="toggleHudVisibility()" class="hidden fixed top-3 right-3 z-40 glass-panel px-3 py-1.5 rounded-xl text-xs font-semibold text-orange-300 border border-orange-500/40 hover:bg-orange-500/20 transition cursor-pointer">
+        👁️ Show HUD
+    </button>
+
+    <!-- BOTTOM INTERACTIVE PHYSICS DOCK -->
+    <footer id="bottomHudBar" class="fixed bottom-0 inset-x-0 z-30 p-2.5 sm:p-4 pointer-events-none hud-transition">
+        <div class="max-w-3xl mx-auto glass-panel p-2.5 sm:px-4 sm:py-3 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 pointer-events-auto">
+            
+            <!-- Spectral Mode Selector -->
+            <div class="flex items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/10 w-full sm:w-auto justify-between sm:justify-start">
+                <button type="button" id="palBtn0" onclick="setSpectralPalette(0)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-500 text-black transition cursor-pointer">
+                    🔥 Gargantua
+                </button>
+                <button type="button" id="palBtn1" onclick="setSpectralPalette(1)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                    ❄️ Quasar Cyan
+                </button>
+                <button type="button" id="palBtn2" onclick="setSpectralPalette(2)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                    🩸 Crimson Nova
+                </button>
+            </div>
+
+            <!-- Zoom & Warp Speed Controls -->
+            <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
+                <div class="flex items-center gap-1.5 recessed-pill px-2.5 py-1 rounded-xl text-[11px] mono-num">
+                    <span class="text-gray-400">DIST:</span>
+                    <span id="distReadout" class="text-orange-300 font-bold">7.0 Rs</span>
+                    <button type="button" onclick="adjustZoom(-1.0)" class="ml-1 px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom In">+</button>
+                    <button type="button" onclick="adjustZoom(1.0)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom Out">&minus;</button>
+                </div>
+
+                <button type="button" id="warpToggleBtn" onclick="cycleWarpSpeed()" class="px-3 py-1.5 rounded-xl recessed-pill border border-orange-500/40 text-[11px] mono-num font-bold text-orange-300 hover:bg-orange-500/15 transition cursor-pointer">
+                    ⚡ WARP: 1.0x
+                </button>
+
+                <button type="button" onclick="resetCameraOrbit()" class="px-2.5 py-1.5 rounded-xl recessed-pill hover:text-white text-[11px] text-gray-300 font-semibold transition cursor-pointer">
+                    ↺ Reset
+                </button>
+            </div>
+
+        </div>
+    </footer>
+
+<script>
+    // =========================================================================
+    // MODULE 1: UPGRADED SCHWARZSCHILD NULL-GEODESIC SHADER
+    // - Adds Photon Ring (Einstein Lensing Halo), Spectral Palettes, Zoom & Warp
+    // =========================================================================
     const vertexShaderSource = `
         attribute vec2 a_position;
         void main() {
@@ -128,48 +244,48 @@
         }
     `;
 
-    // Schwarzschild metric raytracer with Lensed Warp Starfield & Speed Lines
     const fragmentShaderSource = `
         precision highp float;
 
         uniform vec2 u_resolution;
         uniform float u_time;
         uniform vec2 u_mouse;
+        uniform float u_camDist;
+        uniform float u_palette;
+        uniform float u_warpSpeed;
 
-        // Hash and procedural noise for the accretion gas
-        float hash(float n) { return fract(sin(n)*43758.5453); }
+        float hash(float n) { return fract(sin(n) * 43758.5453); }
+        
         float noise(vec3 x) {
             vec3 p = floor(x);
             vec3 f = fract(x);
-            f = f*f*(3.0-2.0*f);
-            float n = p.x + p.y*57.0 + 113.0*p.z;
-            return mix(mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
-                           mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y),
-                       mix(mix( hash(n+113.0), hash(n+114.0),f.x),
-                           mix( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
+            f = f * f * (3.0 - 2.0 * f);
+            float n = p.x + p.y * 57.0 + 113.0 * p.z;
+            return mix(mix(mix(hash(n + 0.0),   hash(n + 1.0),   f.x),
+                           mix(hash(n + 57.0),  hash(n + 58.0),  f.x), f.y),
+                       mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                           mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
         }
 
-        // Fractional Brownian Motion
         float fbm(vec3 p) {
             float f = 0.0;
             float amp = 0.5;
-            for(int i=0; i<4; i++) {
+            for(int i = 0; i < 4; i++) {
                 f += amp * noise(p);
-                p *= 2.02;
+                p *= 2.03;
                 amp *= 0.5;
             }
             return f;
         }
 
-        // Dynamic Moving Starfield & Speed Lines
-        vec3 getSky(vec3 dir, float time, vec3 travelDir) {
-            // 1. Static Milky Way background stars
+        vec3 getSky(vec3 dir, float time, vec3 travelDir, float warpMult) {
             float n = hash(dot(dir, vec3(17.0, 39.0, 83.0)));
-            float staticStar = smoothstep(0.99, 1.0, n) * 2.0;
-            float glow = max(0.0, 1.0 - abs(dir.y)*2.5) * 0.15;
-            vec3 col = vec3(staticStar) * vec3(0.85, 0.92, 1.0) + vec3(0.05, 0.08, 0.15) * glow;
+            float staticStar = smoothstep(0.991, 1.0, n) * 2.2;
+            float glow = max(0.0, 1.0 - abs(dir.y) * 2.4) * 0.14;
+            vec3 col = vec3(staticStar) * vec3(0.85, 0.92, 1.0) + vec3(0.05, 0.08, 0.16) * glow;
 
-            // 2. Warp Speed Lines / Shooting Stars
+            if (warpMult <= 0.05) return col;
+
             vec3 up = vec3(0.0, 1.0, 0.0);
             if (abs(dot(travelDir, up)) > 0.9) up = vec3(1.0, 0.0, 0.0);
             vec3 right = normalize(cross(travelDir, up));
@@ -178,34 +294,29 @@
             float forwardDot = dot(dir, travelDir);
             vec2 uv = vec2(dot(dir, right), dot(dir, up)) / (abs(forwardDot) + 0.001);
 
-            float warpTime = time * 5.0; // Warp speed multiplier
+            float warpTime = time * 4.5 * warpMult;
             vec3 warpCol = vec3(0.0);
 
-            // 6 layers of depth for streak lines
             for(float i = 0.0; i < 6.0; i++) {
                 float fractZ = fract(warpTime + i * 0.166);
                 float depth = 4.0 - fractZ * 3.8;
 
-                vec2 p = uv * depth;
-                p += vec2(i * 12.34, i * 7.89);
-
+                vec2 p = uv * depth + vec2(i * 12.34, i * 7.89);
                 vec2 id = floor(p);
                 vec2 f = fract(p) - 0.5;
 
                 float rand = hash(id.x * 21.53 + id.y * 43.19 + i);
-                if (rand > 0.94) { // Star density
+                if (rand > 0.945) {
                     vec2 dir2D = normalize(uv + vec2(0.0001));
-
                     float d = abs(dot(f, vec2(-dir2D.y, dir2D.x)));
                     float len = length(f);
 
                     float intensity = smoothstep(0.04, 0.0, d) * smoothstep(0.7, 0.0, len);
-                    float core = smoothstep(0.07, 0.0, length(f)) * 2.0;
-
+                    float core = smoothstep(0.07, 0.0, len) * 2.0;
                     float fade = smoothstep(0.0, 0.25, fractZ) * smoothstep(1.0, 0.65, fractZ);
 
-                    vec3 starColor = mix(vec3(0.7, 0.9, 1.0), vec3(1.0, 1.0, 1.0), hash(rand * 15.0));
-                    warpCol += starColor * (intensity + core) * fade * 60.0;
+                    vec3 starColor = mix(vec3(0.7, 0.9, 1.0), vec3(1.0, 0.95, 0.9), hash(rand * 15.0));
+                    warpCol += starColor * (intensity + core) * fade * 55.0;
                 }
             }
 
@@ -216,11 +327,10 @@
             vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
             vec2 mouse = vec2(u_mouse.x / u_resolution.x, u_mouse.y / u_resolution.y) - 0.5;
 
-            // Camera System setup (Orbital mechanics)
-            float camDist = 7.0;
-            float camAngle = -u_time * 0.03 + mouse.x * 6.0;
-            float camHeight = 0.3 + mouse.y * 6.0;
-            vec3 camPos = vec3(sin(camAngle)*camDist, camHeight, cos(camAngle)*camDist);
+            float camDist = u_camDist;
+            float camAngle = -u_time * 0.035 + mouse.x * 6.28;
+            float camHeight = clamp(0.35 + mouse.y * 5.2, -4.5, 4.5);
+            vec3 camPos = vec3(sin(camAngle) * camDist, camHeight, cos(camAngle) * camDist);
 
             vec3 lookAt = vec3(0.0, 0.0, 0.0);
             vec3 forward = normalize(lookAt - camPos);
@@ -230,92 +340,116 @@
             vec3 rayDir = normalize(forward + uv.x * right + uv.y * up);
             vec3 rayPos = camPos;
 
-            // Physics Constants
             float mass = 0.5;
-            float rs = 2.0 * mass; // Schwarzschild radius
-            float stepSize = 0.09;
+            float rs = 2.0 * mass;
+            float stepSize = 0.088;
 
-            // Accretion Disk bounds
-            float diskInner = rs * 1.3;
+            float diskInner = rs * 1.32;
             float diskOuter = rs * 6.0;
 
             vec3 col = vec3(0.0);
             vec3 diskGlow = vec3(0.0);
             float transmittance = 1.0;
+            float minR = 100.0;
 
-            // Raymarching Geodesics (140 steps)
-            for(int i = 0; i < 140; i++) {
+            for(int i = 0; i < 135; i++) {
                 float r2 = dot(rayPos, rayPos);
                 float r = sqrt(r2);
+                minR = min(minR, r);
 
-                // 1. GRAVITY BENDING (Euler integration of null-geodesic)
                 vec3 accel = -normalize(rayPos) * (mass / r2);
                 rayDir = normalize(rayDir + accel * stepSize);
                 rayPos += rayDir * stepSize;
 
-                // 2. EVENT HORIZON TRAP
-                if (r < rs * 0.95) {
+                // Event Horizon Capture
+                if (r < rs * 0.96) {
                     col = vec3(0.0);
                     break;
                 }
 
-                // 3. ACCRETION DISK (Volumetric realistic gas)
-                if (abs(rayPos.y) < 0.15 && r > diskInner && r < diskOuter) {
-                    float alpha = smoothstep(diskOuter, diskInner + 0.5, r) * smoothstep(diskInner, diskInner + 0.3, r);
-                    alpha *= smoothstep(0.15, 0.0, abs(rayPos.y));
+                // Volumetric Accretion Disk
+                if (abs(rayPos.y) < 0.16 && r > diskInner && r < diskOuter) {
+                    float alpha = smoothstep(diskOuter, diskInner + 0.5, r) * smoothstep(diskInner, diskInner + 0.28, r);
+                    alpha *= smoothstep(0.16, 0.0, abs(rayPos.y));
 
                     float angle = atan(rayPos.z, rayPos.x);
-
-                    vec3 noiseCoord = vec3(angle * 4.0 - u_time * 2.0, r * 3.5, u_time * 0.3);
+                    vec3 noiseCoord = vec3(angle * 4.0 - u_time * 2.1, r * 3.6, u_time * 0.35);
                     float gasDetail = fbm(noiseCoord);
 
-                    // RELATIVISTIC DOPPLER BEAMING
                     vec3 velocity = normalize(vec3(-rayPos.z, 0.0, rayPos.x));
-                    float doppler = 1.0 + dot(rayDir, velocity) * 1.8;
+                    float doppler = 1.0 + dot(rayDir, velocity) * 1.85;
+                    float density = alpha * gasDetail * 0.52 * doppler;
 
-                    float density = alpha * gasDetail * 0.5 * doppler;
+                    float heat = clamp((diskOuter - r) / (diskOuter - diskInner), 0.0, 1.0);
+                    vec3 baseColor;
+                    vec3 shiftColor;
 
-                    float heat = (diskOuter - r) / (diskOuter - diskInner);
-                    vec3 baseColor = mix(vec3(1.0, 0.2, 0.01), vec3(1.0, 0.9, 0.8), pow(heat, 1.5));
-                    vec3 shiftColor = mix(vec3(1.0, 0.1, 0.0), vec3(0.4, 0.8, 1.0), doppler * 0.3);
+                    if (u_palette < 0.5) {
+                        // 0: Gargantua Gold-Orange
+                        baseColor = mix(vec3(1.0, 0.22, 0.02), vec3(1.0, 0.92, 0.82), pow(heat, 1.45));
+                        shiftColor = mix(vec3(1.0, 0.12, 0.0), vec3(0.45, 0.82, 1.0), doppler * 0.3);
+                    } else if (u_palette < 1.5) {
+                        // 1: Quasar Cyan-Blue
+                        baseColor = mix(vec3(0.04, 0.35, 1.0), vec3(0.88, 0.98, 1.0), pow(heat, 1.4));
+                        shiftColor = mix(vec3(0.1, 0.4, 1.0), vec3(0.6, 1.0, 0.9), doppler * 0.32);
+                    } else {
+                        // 2: Crimson Nova
+                        baseColor = mix(vec3(0.85, 0.02, 0.18), vec3(1.0, 0.78, 0.92), pow(heat, 1.5));
+                        shiftColor = mix(vec3(1.0, 0.05, 0.1), vec3(0.85, 0.4, 1.0), doppler * 0.3);
+                    }
 
-                    vec3 c = baseColor * shiftColor * density * 3.5;
-
+                    vec3 c = baseColor * shiftColor * density * 3.6;
                     diskGlow += c * transmittance;
                     transmittance *= (1.0 - density * 0.6);
 
                     if (transmittance <= 0.01) break;
                 }
 
-                // 4. Lensed Moving Starfield (Warp Speed Background) - Threshold set to 13.0 so rays easily escape
-                if (r > 13.0) {
-                    col = getSky(rayDir, u_time, forward) * transmittance;
+                if (r > 13.5) {
+                    col = getSky(rayDir, u_time, forward, u_warpSpeed) * transmittance;
                     break;
                 }
             }
 
-            col += diskGlow;
+            // Relativistic Photon Sphere Ring (Einstein Ring at r ~ 1.5 Rs)
+            float photonRing = exp(-pow((minR - rs * 1.48) * 14.0, 2.0)) * 0.55 * transmittance;
+            vec3 ringTint = (u_palette < 0.5) ? vec3(1.0, 0.75, 0.45) : (u_palette < 1.5 ? vec3(0.5, 0.88, 1.0) : vec3(1.0, 0.35, 0.55));
 
-            // Cinematic ACES-like Tonemapping & Gamma Correction
+            col += diskGlow + ringTint * photonRing;
+
+            // ACES Filmic Tonemapping & Gamma
             col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
-            col = pow(col, vec3(1.0/2.2));
+            col = pow(max(col, vec3(0.0)), vec3(1.0 / 2.2));
 
             gl_FragColor = vec4(col, 1.0);
         }
     `;
 
-    // ==========================================
-    // MODULE 2: WEBGL ENGINE SETUP
-    // ==========================================
-    class Engine {
+    // =========================================================================
+    // MODULE 2: WEBGL ENGINE WITH ADAPTIVE DPI, PINCH/SCROLL ZOOM & FPS MONITOR
+    // =========================================================================
+    class SingularityEngine {
         constructor(canvasId) {
             this.canvas = document.getElementById(canvasId);
-            this.gl = this.canvas.getContext('webgl');
+            this.gl = this.canvas.getContext('webgl', { antialias: false, powerPreference: 'high-performance' });
 
-            this.mouseX = this.canvas.width / 2;
-            this.mouseY = this.canvas.height / 2;
+            this.mouseX = window.innerWidth * 0.5;
+            this.mouseY = window.innerHeight * 0.46;
             this.targetMouseX = this.mouseX;
             this.targetMouseY = this.mouseY;
+
+            this.camDist = 7.0;
+            this.targetCamDist = 7.0;
+            this.palette = 0.0;
+            this.warpSpeed = 1.0;
+
+            this.isPointerDown = false;
+            this.lastPointerX = 0;
+            this.lastPointerY = 0;
+            this.initialPinchDist = null;
+
+            this.frameCount = 0;
+            this.lastFpsCheck = performance.now();
 
             this.init();
             this.setupEvents();
@@ -351,96 +485,243 @@
             this.uResolution = this.gl.getUniformLocation(this.program, "u_resolution");
             this.uTime = this.gl.getUniformLocation(this.program, "u_time");
             this.uMouse = this.gl.getUniformLocation(this.program, "u_mouse");
+            this.uCamDist = this.gl.getUniformLocation(this.program, "u_camDist");
+            this.uPalette = this.gl.getUniformLocation(this.program, "u_palette");
+            this.uWarpSpeed = this.gl.getUniformLocation(this.program, "u_warpSpeed");
 
             this.resize();
         }
 
         setupEvents() {
             window.addEventListener('resize', () => this.resize());
-            const updateMouse = (x, y) => { this.targetMouseX = x; this.targetMouseY = y; };
-            window.addEventListener('mousemove', e => updateMouse(e.clientX, e.clientY));
-            window.addEventListener('touchmove', e => updateMouse(e.touches[0].clientX, e.touches[0].clientY), { passive: true });
+
+            // Mouse hover / drag orbit
+            window.addEventListener('mousemove', e => {
+                this.targetMouseX = e.clientX * this.dpr;
+                this.targetMouseY = e.clientY * this.dpr;
+            });
+
+            // Scroll wheel zoom
+            window.addEventListener('wheel', e => {
+                this.setZoom(this.targetCamDist + (e.deltaY * 0.004));
+            }, { passive: true });
+
+            // Touch 1-finger orbit & 2-finger pinch zoom
+            window.addEventListener('touchstart', e => {
+                if (e.touches.length === 2) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    this.initialPinchDist = Math.hypot(dx, dy);
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', e => {
+                if (e.touches.length === 1) {
+                    this.targetMouseX = e.touches[0].clientX * this.dpr;
+                    this.targetMouseY = e.touches[0].clientY * this.dpr;
+                } else if (e.touches.length === 2 && this.initialPinchDist) {
+                    const dx = e.touches[0].clientX - e.touches[1].clientX;
+                    const dy = e.touches[0].clientY - e.touches[1].clientY;
+                    const dist = Math.hypot(dx, dy);
+                    const delta = (this.initialPinchDist - dist) * 0.025;
+                    this.setZoom(this.targetCamDist + delta);
+                    this.initialPinchDist = dist;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
+                this.initialPinchDist = null;
+            }, { passive: true });
+        }
+
+        setZoom(newDist) {
+            this.targetCamDist = Math.max(3.6, Math.min(11.5, newDist));
+            const el = document.getElementById('distReadout');
+            if (el) el.innerText = `${this.targetCamDist.toFixed(1)} Rs`;
         }
 
         resize() {
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
+            // Cap pixel ratio at 1.35x so heavy 135-step raymarching stays locked at 60+ FPS on mobile & 4K screens
+            this.dpr = Math.min(window.devicePixelRatio || 1, 1.35);
+            this.canvas.width = Math.floor(window.innerWidth * this.dpr);
+            this.canvas.height = Math.floor(window.innerHeight * this.dpr);
             this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         }
 
         render(time) {
-            this.mouseX += (this.targetMouseX - this.mouseX) * 0.05;
-            this.mouseY += (this.targetMouseY - this.mouseY) * 0.05;
+            this.frameCount++;
+            if (time - this.lastFpsCheck >= 500) {
+                const fps = Math.min(144, Math.round((this.frameCount * 1000) / (time - this.lastFpsCheck)));
+                const fpsEl = document.getElementById('fpsCounter');
+                if (fpsEl) fpsEl.innerText = `${fps} FPS`;
+                this.frameCount = 0;
+                this.lastFpsCheck = time;
+            }
+
+            this.mouseX += (this.targetMouseX - this.mouseX) * 0.06;
+            this.mouseY += (this.targetMouseY - this.mouseY) * 0.06;
+            this.camDist += (this.targetCamDist - this.camDist) * 0.08;
 
             this.gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
             this.gl.uniform1f(this.uTime, time * 0.001);
             this.gl.uniform2f(this.uMouse, this.mouseX, this.mouseY);
+            this.gl.uniform1f(this.uCamDist, this.camDist);
+            this.gl.uniform1f(this.uPalette, this.palette);
+            this.gl.uniform1f(this.uWarpSpeed, this.warpSpeed);
 
             this.gl.drawArrays(this.gl.TRIANGLES, 0, 6);
             requestAnimationFrame((t) => this.render(t));
         }
     }
 
-    const engine = new Engine('glcanvas');
-    engine.render(0);
+    const engine = new SingularityEngine('glcanvas');
+    requestAnimationFrame((t) => engine.render(t));
 
-    // ==========================================
-    // MODULE 3: AUDIO & LIFECYCLE MANAGEMENT
-    // ==========================================
-
+    // =========================================================================
+    // MODULE 3: INTERACTIVE HUD CONTROLS & AUDIO LIFECYCLE
+    // =========================================================================
     const startOverlay = document.getElementById('startOverlay');
     const bgMusic = document.getElementById('bgMusic');
-
-    bgMusic.volume = 1.0;
+    const audioClock = document.getElementById('audioClock');
     let isExperienceActive = false;
+    let isHudHidden = false;
 
-    startOverlay.addEventListener('click', async () => {
-        isExperienceActive = true;
-        bgMusic.currentTime = 10;
-        bgMusic.play().catch(e => console.log("Audio play prevented:", e));
-        startOverlay.classList.add('hidden');
+    function setEqAnimation(playing) {
+        document.querySelectorAll('.eq-bar').forEach(bar => {
+            if (playing && !bgMusic.muted) bar.classList.remove('eq-paused');
+            else bar.classList.add('eq-paused');
+        });
+    }
 
-        // Force Fullscreen & Landscape Orientation Lock on Mobile
-        try {
-            if (document.documentElement.requestFullscreen) {
-                await document.documentElement.requestFullscreen();
-            } else if (document.documentElement.webkitRequestFullscreen) { /* Safari fallback */
-                await document.documentElement.webkitRequestFullscreen();
-            }
+    bgMusic.addEventListener('play', () => setEqAnimation(true));
+    bgMusic.addEventListener('pause', () => setEqAnimation(false));
 
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape');
-            }
-        } catch (err) {
-            console.log("Fullscreen or orientation lock denied/unsupported:", err);
-        }
+    bgMusic.addEventListener('timeupdate', () => {
+        const sec = Math.max(0, Math.floor((bgMusic.currentTime || 10) - 10));
+        const m = String(Math.floor(sec / 60)).padStart(2, '0');
+        const s = String(sec % 60).padStart(2, '0');
+        if (audioClock) audioClock.innerText = `${m}:${s}`;
     });
 
     bgMusic.addEventListener('ended', function() {
         this.currentTime = 10;
-        this.play();
+        this.play().catch(() => {});
     });
 
+    async function launchSingularityExperience() {
+        isExperienceActive = true;
+        startOverlay.style.opacity = '0';
+        setTimeout(() => { startOverlay.style.display = 'none'; }, 450);
+
+        bgMusic.volume = 1.0;
+        try {
+            bgMusic.currentTime = 10;
+        } catch (e) {}
+        bgMusic.play().then(() => setEqAnimation(true)).catch(() => {});
+
+        // Request Fullscreen & Landscape Lock on Mobile if supported
+        try {
+            if (window.innerWidth < 900) {
+                if (document.documentElement.requestFullscreen) {
+                    await document.documentElement.requestFullscreen();
+                } else if (document.documentElement.webkitRequestFullscreen) {
+                    await document.documentElement.webkitRequestFullscreen();
+                }
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('landscape');
+                }
+            }
+        } catch (err) {}
+    }
+
+    function toggleAudioMute() {
+        bgMusic.muted = !bgMusic.muted;
+        const btn = document.getElementById('muteBtn');
+        if (btn) btn.innerText = bgMusic.muted ? 'Unmute' : 'Mute';
+        setEqAnimation(!bgMusic.paused);
+    }
+
+    // Pause audio on tab switch or window blur; resume on focus
     document.addEventListener('visibilitychange', () => {
         if (!isExperienceActive) return;
-
-        if (document.hidden) {
-            bgMusic.pause();
-        } else {
-            bgMusic.play().catch(e => console.log("Audio resume prevented:", e));
-        }
+        if (document.hidden) bgMusic.pause();
+        else bgMusic.play().catch(() => {});
     });
+    window.addEventListener('blur', () => { if (isExperienceActive) bgMusic.pause(); });
+    window.addEventListener('focus', () => {
+        if (isExperienceActive && !document.hidden) bgMusic.play().catch(() => {});
+    });
+    window.addEventListener('pagehide', () => bgMusic.pause());
 
-    const exitApp = () => {
+    function setSpectralPalette(idx) {
+        engine.palette = idx;
+        [0, 1, 2].forEach(i => {
+            const btn = document.getElementById(`palBtn${i}`);
+            if (!btn) return;
+            if (i === idx) {
+                btn.className = "flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-500 text-black transition cursor-pointer";
+            } else {
+                btn.className = "flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer";
+            }
+        });
+    }
+
+    function adjustZoom(delta) {
+        engine.setZoom(engine.targetCamDist + delta);
+    }
+
+    const WARP_STATES = [
+        { mult: 1.0, label: "⚡ WARP: 1.0x" },
+        { mult: 2.2, label: "⚡ WARP: 2.2x" },
+        { mult: 0.0, label: "🌌 WARP: OFF" }
+    ];
+    let warpIdx = 0;
+
+    function cycleWarpSpeed() {
+        warpIdx = (warpIdx + 1) % WARP_STATES.length;
+        engine.warpSpeed = WARP_STATES[warpIdx].mult;
+        const btn = document.getElementById('warpToggleBtn');
+        if (btn) btn.innerText = WARP_STATES[warpIdx].label;
+    }
+
+    function resetCameraOrbit() {
+        engine.targetMouseX = engine.canvas.width * 0.5;
+        engine.targetMouseY = engine.canvas.height * 0.46;
+        engine.setZoom(7.0);
+    }
+
+    function toggleHudVisibility() {
+        isHudHidden = !isHudHidden;
+        const topBar = document.getElementById('topHudBar');
+        const bottomBar = document.getElementById('bottomHudBar');
+        const restoreBtn = document.getElementById('restoreHudBtn');
+
+        if (isHudHidden) {
+            topBar.classList.add('hud-hidden-top');
+            bottomBar.classList.add('hud-hidden-bottom');
+            restoreBtn.classList.remove('hidden');
+        } else {
+            topBar.classList.remove('hud-hidden-top');
+            bottomBar.classList.remove('hud-hidden-bottom');
+            restoreBtn.classList.add('hidden');
+        }
+    }
+
+    function exitSimulation() {
         bgMusic.pause();
         isExperienceActive = false;
+        if (document.fullscreenElement && document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
         window.close();
-        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#ff6a00;font-size:1.5rem;letter-spacing:2px;font-family:sans-serif;text-align:center;padding:20px;">Simulation Closed.<br>You may safely close this tab.</div>';
-    };
+        // Fallback if browser blocks window.close() on direct tab
+        window.location.href = 'index.html';
+    }
 
-    document.getElementById('closeBtn').addEventListener('click', exitApp);
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') exitApp(); });
-
+    window.addEventListener('keydown', e => {
+        if (e.key === 'Escape') exitSimulation();
+        else if (e.key === 'h' || e.key === 'H') toggleHudVisibility();
+    });
 </script>
 </body>
 </html>
