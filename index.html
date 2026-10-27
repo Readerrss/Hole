@@ -9,10 +9,14 @@
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
         :root {
-            --bg-canvas: #04060a;
-            --surface-primary: rgba(15, 19, 28, 0.78);
-            --surface-recessed: rgba(9, 11, 17, 0.85);
-            --border-subtle: rgba(255, 255, 255, 0.1);
+            --bg-canvas: #000000;
+            --surface-primary: rgba(10, 12, 18, 0.76);
+            --surface-recessed: rgba(4, 5, 8, 0.88);
+            --border-subtle: rgba(255, 255, 255, 0.09);
+            --accent-color: #f97316;
+            --accent-rgb: 249, 115, 22;
+            --accent-text: #fdba74;
+            --accent-btn-text: #000000;
         }
 
         * {
@@ -27,7 +31,7 @@
             width: 100vw;
             height: 100dvh;
             overflow: hidden;
-            background: var(--bg-canvas);
+            background: #000000;
             color: #e2e8f0;
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             touch-action: none;
@@ -46,24 +50,46 @@
             position: fixed;
             inset: 0;
             z-index: 1;
+            background: #000000;
             cursor: grab;
         }
         canvas:active {
             cursor: grabbing;
         }
 
+        /* Dynamic Theme-Reactive Glass Panels */
         .glass-panel {
             background: var(--surface-primary);
-            border: 1px solid var(--border-subtle);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.85);
+            border: 1px solid rgba(var(--accent-rgb), 0.24);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 12px 36px -8px rgba(0, 0, 0, 0.95), 0 0 24px -10px rgba(var(--accent-rgb), 0.22);
+            transition: border-color 0.35s ease, box-shadow 0.35s ease;
         }
 
         .recessed-pill {
             background: var(--surface-recessed);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.65);
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.8);
+            transition: border-color 0.3s ease;
+        }
+
+        .dynamic-badge {
+            background: rgba(var(--accent-rgb), 0.14);
+            color: var(--accent-text);
+            border: 1px solid rgba(var(--accent-rgb), 0.35);
+            transition: all 0.35s ease;
+        }
+
+        .dynamic-dot {
+            background: var(--accent-color);
+            box-shadow: 0 0 12px var(--accent-color);
+            transition: all 0.35s ease;
+        }
+
+        .dynamic-text {
+            color: var(--accent-text);
+            transition: color 0.35s ease;
         }
 
         .btn-launch {
@@ -78,6 +104,40 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 26px rgba(249, 115, 22, 0.55);
             filter: brightness(1.08);
+        }
+
+        /* Palette Active Pill */
+        .pal-btn-active {
+            background: var(--accent-color);
+            color: var(--accent-btn-text);
+            box-shadow: 0 0 16px rgba(var(--accent-rgb), 0.45);
+            font-weight: 700;
+        }
+
+        /* Dynamic Range Slider */
+        input[type="range"].telemetry-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 72px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            outline: none;
+            cursor: pointer;
+        }
+        input[type="range"].telemetry-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.3s ease;
+        }
+        input[type="range"].telemetry-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
         }
 
         @keyframes eqBounce {
@@ -102,9 +162,12 @@
             transform: translate3d(0, 24px, 0);
             pointer-events: none;
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="bg-black">
 
     <!-- WEBGL SINGULARITY CANVAS -->
     <canvas id="glcanvas"></canvas>
@@ -115,20 +178,20 @@
         <source src="/media/leberch-space-440026.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- START OVERLAY (ALWAYS SHOWN ON ENTRY ACROSS PC, MOBILE & REDIRECTS) -->
-    <div id="startOverlay" style="display: flex;" onclick="launchSingularityExperience()" class="fixed inset-0 bg-black/90 z-50 flex flex-col items-center justify-center p-5 text-center cursor-pointer backdrop-blur-md transition-opacity duration-500">
-        <div class="glass-panel p-6 sm:p-8 rounded-2xl max-w-md w-full border border-orange-500/40 space-y-4">
-            <div class="w-14 h-14 rounded-full bg-orange-500/15 border border-orange-500/40 flex items-center justify-center mx-auto text-2xl shadow-[0_0_24px_rgba(249,115,22,0.3)]">
+    <!-- START OVERLAY (PURE BLACK VOID ENTRY) -->
+    <div id="startOverlay" style="display: flex;" onclick="launchSingularityExperience()" class="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-5 text-center cursor-pointer transition-opacity duration-500">
+        <div class="glass-panel p-6 sm:p-8 rounded-2xl max-w-md w-full space-y-4">
+            <div class="w-14 h-14 rounded-full dynamic-badge flex items-center justify-center mx-auto text-2xl shadow-[0_0_24px_rgba(249,115,22,0.3)]">
                 🕳️
             </div>
-            <span class="inline-block px-2.5 py-0.5 text-[11px] mono-num font-bold uppercase bg-orange-500/15 text-orange-300 border border-orange-500/30 rounded">
+            <span class="inline-block px-2.5 py-0.5 text-[11px] mono-num font-bold uppercase dynamic-badge rounded">
                 ROADSENSE // EASTER EGG PORTAL
             </span>
             <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
                 EVENT HORIZON
             </h1>
             <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
-                Real-time Schwarzschild null-geodesic raytracer with relativistic Doppler beaming and spatial audio.
+                Real-time Schwarzschild null-geodesic raytracer in pure pitch-black space with relativistic Doppler beaming and spatial audio.
             </p>
             <div class="recessed-pill p-2.5 rounded-xl text-[11px] mono-num text-gray-400 space-y-1">
                 <div>• <strong class="text-gray-200">Orbit:</strong> Drag / Touch Move</div>
@@ -140,24 +203,31 @@
         </div>
     </div>
 
-    <!-- TOP TELEMETRY BAR (NON-OVERLAPPING ON MOBILE & PC) -->
+    <!-- TOP TELEMETRY BAR (DYNAMIC THEME-REACTIVE HUD) -->
     <header id="topHudBar" class="fixed top-0 inset-x-0 z-30 p-2.5 sm:p-4 pointer-events-none hud-transition">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
             
-            <!-- Brand & Live Telemetry Pill -->
+            <!-- Brand, Mode Designation & Live Telemetry Pill -->
             <div class="glass-panel px-3 py-2 rounded-xl flex items-center justify-between sm:justify-start gap-2.5 pointer-events-auto">
                 <div class="flex items-center gap-2 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-orange-400 animate-pulse shrink-0"></span>
-                    <span class="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
+                    <span class="w-2.5 h-2.5 rounded-full dynamic-dot animate-pulse shrink-0"></span>
+                    <span id="hudModeTitle" class="text-xs sm:text-sm font-bold text-white tracking-tight truncate">
                         SINGULARITY // GARGANTUA
                     </span>
-                    <span id="fpsCounter" class="px-2 py-0.5 text-[10px] mono-num font-semibold bg-orange-500/15 text-orange-300 border border-orange-500/30 rounded shrink-0">
+                    <span id="fpsCounter" class="px-2 py-0.5 text-[10px] mono-num font-semibold dynamic-badge rounded shrink-0">
                         60 FPS
                     </span>
                 </div>
 
+                <!-- Live Relativistic Telemetry Readouts (Desktop/Tablet) -->
+                <div class="hidden md:flex items-center gap-2 pl-2 border-l border-white/10 text-[10px] mono-num text-gray-400">
+                    <span>DILATION: <strong id="dilationReadout" class="dynamic-text">1.07x</strong></span>
+                    <span>•</span>
+                    <span>INCL: <strong id="tiltReadout" class="text-gray-200">+2.5°</strong></span>
+                </div>
+
                 <!-- Mobile Quick Exit Button -->
-                <button type="button" onclick="exitSimulation()" class="sm:hidden px-2.5 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-[11px] font-bold transition cursor-pointer shrink-0">
+                <button type="button" onclick="exitSimulation()" class="sm:hidden px-2.5 py-1 rounded-lg bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-bold transition cursor-pointer shrink-0">
                     ✕ Exit
                 </button>
             </div>
@@ -166,12 +236,12 @@
             <div class="glass-panel px-3 py-1.5 rounded-xl flex items-center justify-between sm:justify-end gap-2 pointer-events-auto">
                 <div class="flex items-center gap-2 px-2.5 py-1 rounded-lg recessed-pill">
                     <div class="flex items-end gap-0.5 h-3">
-                        <span class="eq-bar w-0.5 sm:w-1 bg-orange-400 eq-1 eq-paused rounded-full"></span>
-                        <span class="eq-bar w-0.5 sm:w-1 bg-amber-300 eq-2 eq-paused rounded-full"></span>
-                        <span class="eq-bar w-0.5 sm:w-1 bg-orange-400 eq-3 eq-paused rounded-full"></span>
+                        <span class="eq-bar w-0.5 sm:w-1 dynamic-dot eq-1 eq-paused rounded-full"></span>
+                        <span class="eq-bar w-0.5 sm:w-1 dynamic-dot eq-2 eq-paused rounded-full"></span>
+                        <span class="eq-bar w-0.5 sm:w-1 dynamic-dot eq-3 eq-paused rounded-full"></span>
                     </div>
                     <span id="audioClock" class="mono-num text-[11px] text-gray-200">00:00</span>
-                    <button type="button" id="muteBtn" onclick="toggleAudioMute()" class="text-[11px] text-orange-300 hover:text-orange-200 font-semibold ml-1 cursor-pointer">
+                    <button type="button" id="muteBtn" onclick="toggleAudioMute()" class="text-[11px] dynamic-text hover:opacity-80 font-semibold ml-1 cursor-pointer">
                         Mute
                     </button>
                 </div>
@@ -180,7 +250,7 @@
                     <button type="button" onclick="toggleHudVisibility()" class="px-2.5 py-1 rounded-lg recessed-pill hover:border-gray-500 text-[11px] font-semibold text-gray-200 transition cursor-pointer" title="Toggle HUD (H)">
                         👁️ Hide HUD
                     </button>
-                    <button type="button" onclick="exitSimulation()" class="hidden sm:inline-flex px-3 py-1 rounded-lg bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition cursor-pointer">
+                    <button type="button" onclick="exitSimulation()" class="hidden sm:inline-flex px-3 py-1 rounded-lg bg-red-600/90 hover:bg-red-500 text-white text-xs font-bold transition cursor-pointer">
                         ✕ Exit
                     </button>
                 </div>
@@ -190,38 +260,45 @@
     </header>
 
     <!-- FLOATING RESTORE HUD BUTTON (ONLY VISIBLE WHEN HUD IS HIDDEN) -->
-    <button id="restoreHudBtn" type="button" onclick="toggleHudVisibility()" class="hidden fixed top-3 right-3 z-40 glass-panel px-3 py-1.5 rounded-xl text-xs font-semibold text-orange-300 border border-orange-500/40 hover:bg-orange-500/20 transition cursor-pointer">
+    <button id="restoreHudBtn" type="button" onclick="toggleHudVisibility()" class="hidden fixed top-3 right-3 z-40 glass-panel px-3 py-1.5 rounded-xl text-xs font-semibold dynamic-text hover:opacity-90 transition cursor-pointer">
         👁️ Show HUD
     </button>
 
     <!-- BOTTOM INTERACTIVE PHYSICS DOCK -->
     <footer id="bottomHudBar" class="fixed bottom-0 inset-x-0 z-30 p-2.5 sm:p-4 pointer-events-none hud-transition">
-        <div class="max-w-3xl mx-auto glass-panel p-2.5 sm:px-4 sm:py-3 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 pointer-events-auto">
+        <div class="max-w-4xl mx-auto glass-panel p-2.5 sm:px-4 sm:py-3 rounded-2xl flex flex-wrap items-center justify-between gap-2.5 pointer-events-auto">
             
             <!-- Spectral Mode Selector -->
-            <div class="flex items-center gap-1 bg-black/50 p-1 rounded-xl border border-white/10 w-full sm:w-auto justify-between sm:justify-start">
-                <button type="button" id="palBtn0" onclick="setSpectralPalette(0)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-500 text-black transition cursor-pointer">
+            <div class="flex items-center gap-1 bg-black/60 p-1 rounded-xl border border-white/10 w-full sm:w-auto overflow-x-auto no-scrollbar justify-between sm:justify-start">
+                <button type="button" id="palBtn0" onclick="setSpectralPalette(0)" class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] pal-btn-active transition cursor-pointer">
                     🔥 Gargantua
                 </button>
-                <button type="button" id="palBtn1" onclick="setSpectralPalette(1)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                <button type="button" id="palBtn1" onclick="setSpectralPalette(1)" class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                    🤍 Armstrong
+                </button>
+                <button type="button" id="palBtn2" onclick="setSpectralPalette(2)" class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
                     ❄️ Quasar Cyan
                 </button>
-                <button type="button" id="palBtn2" onclick="setSpectralPalette(2)" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                <button type="button" id="palBtn3" onclick="setSpectralPalette(3)" class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
                     🩸 Crimson Nova
+                </button>
+                <button type="button" id="palBtn4" onclick="setSpectralPalette(4)" class="shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer">
+                    💜 Violet Pulsar
                 </button>
             </div>
 
-            <!-- Zoom & Warp Speed Controls -->
+            <!-- Dynamic Zoom Slider, Buttons & Accretion Flow Controls -->
             <div class="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
                 <div class="flex items-center gap-1.5 recessed-pill px-2.5 py-1 rounded-xl text-[11px] mono-num">
                     <span class="text-gray-400">DIST:</span>
-                    <span id="distReadout" class="text-orange-300 font-bold">7.0 Rs</span>
-                    <button type="button" onclick="adjustZoom(-1.0)" class="ml-1 px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom In">+</button>
-                    <button type="button" onclick="adjustZoom(1.0)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom Out">&minus;</button>
+                    <span id="distReadout" class="dynamic-text font-bold w-12 text-right">8.0 Rs</span>
+                    <button type="button" onclick="adjustZoom(-0.8)" class="ml-1 px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom In">+</button>
+                    <input id="zoomSlider" type="range" min="3.6" max="13.0" step="0.1" value="8.0" oninput="onSliderZoom(this.value)" class="telemetry-slider hidden sm:block mx-1" title="Orbital Distance (Rs)" />
+                    <button type="button" onclick="adjustZoom(0.8)" class="px-1.5 py-0.5 rounded bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer" title="Zoom Out">&minus;</button>
                 </div>
 
-                <button type="button" id="warpToggleBtn" onclick="cycleWarpSpeed()" class="px-3 py-1.5 rounded-xl recessed-pill border border-orange-500/40 text-[11px] mono-num font-bold text-orange-300 hover:bg-orange-500/15 transition cursor-pointer">
-                    ⚡ WARP: 1.0x
+                <button type="button" id="warpToggleBtn" onclick="cycleWarpSpeed()" class="px-3 py-1.5 rounded-xl dynamic-badge text-[11px] mono-num font-bold hover:opacity-90 transition cursor-pointer">
+                    ⚡ SPIN: 1.0x
                 </button>
 
                 <button type="button" onclick="resetCameraOrbit()" class="px-2.5 py-1.5 rounded-xl recessed-pill hover:text-white text-[11px] text-gray-300 font-semibold transition cursor-pointer">
@@ -234,8 +311,19 @@
 
 <script>
     // =========================================================================
-    // MODULE 1: UPGRADED SCHWARZSCHILD NULL-GEODESIC SHADER
-    // - Adds Photon Ring (Einstein Lensing Halo), Spectral Palettes, Zoom & Warp
+    // PLATFORM DETECTION: 9.5 Rs DEFAULT FOR ANDROID/MOBILE, 8.0 Rs FOR PC
+    // =========================================================================
+    function isAndroidOrMobileDevice() {
+        const ua = navigator.userAgent || '';
+        if (/Android/i.test(ua)) return true;
+        if (/webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return true;
+        return (window.innerWidth < 768) || (navigator.maxTouchPoints > 1 && window.innerWidth < 1024);
+    }
+
+    // =========================================================================
+    // MODULE 1: ORIGINAL SCHWARZSCHILD BLACK HOLE SHADER ON PURE BLACK VOID
+    // - Preserves exact accretion disk & gravitational lensing math
+    // - Background stars & glow completely removed (100% #000000 black background)
     // =========================================================================
     const vertexShaderSource = `
         attribute vec2 a_position;
@@ -254,83 +342,40 @@
         uniform float u_palette;
         uniform float u_warpSpeed;
 
-        float hash(float n) { return fract(sin(n) * 43758.5453); }
-        
+        // Hash and procedural noise for the accretion gas (Original)
+        float hash(float n) { return fract(sin(n)*43758.5453); }
         float noise(vec3 x) {
             vec3 p = floor(x);
             vec3 f = fract(x);
-            f = f * f * (3.0 - 2.0 * f);
-            float n = p.x + p.y * 57.0 + 113.0 * p.z;
-            return mix(mix(mix(hash(n + 0.0),   hash(n + 1.0),   f.x),
-                           mix(hash(n + 57.0),  hash(n + 58.0),  f.x), f.y),
-                       mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
-                           mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+            f = f*f*(3.0-2.0*f);
+            float n = p.x + p.y*57.0 + 113.0*p.z;
+            return mix(mix(mix( hash(n+  0.0), hash(n+  1.0),f.x),
+                           mix( hash(n+ 57.0), hash(n+ 58.0),f.x),f.y),
+                       mix(mix( hash(n+113.0), hash(n+114.0),f.x),
+                           mix( hash(n+170.0), hash(n+171.0),f.x),f.y),f.z);
         }
 
+        // Fractional Brownian Motion (Original)
         float fbm(vec3 p) {
             float f = 0.0;
             float amp = 0.5;
-            for(int i = 0; i < 4; i++) {
+            for(int i=0; i<4; i++) {
                 f += amp * noise(p);
-                p *= 2.03;
+                p *= 2.02;
                 amp *= 0.5;
             }
             return f;
-        }
-
-        vec3 getSky(vec3 dir, float time, vec3 travelDir, float warpMult) {
-            float n = hash(dot(dir, vec3(17.0, 39.0, 83.0)));
-            float staticStar = smoothstep(0.991, 1.0, n) * 2.2;
-            float glow = max(0.0, 1.0 - abs(dir.y) * 2.4) * 0.14;
-            vec3 col = vec3(staticStar) * vec3(0.85, 0.92, 1.0) + vec3(0.05, 0.08, 0.16) * glow;
-
-            if (warpMult <= 0.05) return col;
-
-            vec3 up = vec3(0.0, 1.0, 0.0);
-            if (abs(dot(travelDir, up)) > 0.9) up = vec3(1.0, 0.0, 0.0);
-            vec3 right = normalize(cross(travelDir, up));
-            up = cross(right, travelDir);
-
-            float forwardDot = dot(dir, travelDir);
-            vec2 uv = vec2(dot(dir, right), dot(dir, up)) / (abs(forwardDot) + 0.001);
-
-            float warpTime = time * 4.5 * warpMult;
-            vec3 warpCol = vec3(0.0);
-
-            for(float i = 0.0; i < 6.0; i++) {
-                float fractZ = fract(warpTime + i * 0.166);
-                float depth = 4.0 - fractZ * 3.8;
-
-                vec2 p = uv * depth + vec2(i * 12.34, i * 7.89);
-                vec2 id = floor(p);
-                vec2 f = fract(p) - 0.5;
-
-                float rand = hash(id.x * 21.53 + id.y * 43.19 + i);
-                if (rand > 0.945) {
-                    vec2 dir2D = normalize(uv + vec2(0.0001));
-                    float d = abs(dot(f, vec2(-dir2D.y, dir2D.x)));
-                    float len = length(f);
-
-                    float intensity = smoothstep(0.04, 0.0, d) * smoothstep(0.7, 0.0, len);
-                    float core = smoothstep(0.07, 0.0, len) * 2.0;
-                    float fade = smoothstep(0.0, 0.25, fractZ) * smoothstep(1.0, 0.65, fractZ);
-
-                    vec3 starColor = mix(vec3(0.7, 0.9, 1.0), vec3(1.0, 0.95, 0.9), hash(rand * 15.0));
-                    warpCol += starColor * (intensity + core) * fade * 55.0;
-                }
-            }
-
-            return col + warpCol;
         }
 
         void main() {
             vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
             vec2 mouse = vec2(u_mouse.x / u_resolution.x, u_mouse.y / u_resolution.y) - 0.5;
 
+            // Camera System setup (Orbital mechanics)
             float camDist = u_camDist;
-            float camAngle = -u_time * 0.035 + mouse.x * 6.28;
-            float camHeight = clamp(0.35 + mouse.y * 5.2, -4.5, 4.5);
-            vec3 camPos = vec3(sin(camAngle) * camDist, camHeight, cos(camAngle) * camDist);
+            float camAngle = -u_time * 0.03 * u_warpSpeed + mouse.x * 6.0;
+            float camHeight = 0.3 + mouse.y * 6.0;
+            vec3 camPos = vec3(sin(camAngle)*camDist, camHeight, cos(camAngle)*camDist);
 
             vec3 lookAt = vec3(0.0, 0.0, 0.0);
             vec3 forward = normalize(lookAt - camPos);
@@ -340,119 +385,144 @@
             vec3 rayDir = normalize(forward + uv.x * right + uv.y * up);
             vec3 rayPos = camPos;
 
+            // Physics Constants (Original)
             float mass = 0.5;
-            float rs = 2.0 * mass;
-            float stepSize = 0.088;
+            float rs = 2.0 * mass; // Schwarzschild radius
+            float stepSize = 0.09;
 
-            float diskInner = rs * 1.32;
+            // Accretion Disk bounds (Original)
+            float diskInner = rs * 1.3;
             float diskOuter = rs * 6.0;
 
-            vec3 col = vec3(0.0);
             vec3 diskGlow = vec3(0.0);
             float transmittance = 1.0;
-            float minR = 100.0;
+            float escapeRadius = max(13.0, camDist + 2.5);
+            float flowTime = u_time * u_warpSpeed;
 
-            for(int i = 0; i < 135; i++) {
+            // Raymarching Geodesics
+            for(int i = 0; i < 160; i++) {
                 float r2 = dot(rayPos, rayPos);
                 float r = sqrt(r2);
-                minR = min(minR, r);
 
+                // 1. GRAVITY BENDING (Euler integration of null-geodesic)
                 vec3 accel = -normalize(rayPos) * (mass / r2);
                 rayDir = normalize(rayDir + accel * stepSize);
                 rayPos += rayDir * stepSize;
 
-                // Event Horizon Capture
-                if (r < rs * 0.96) {
-                    col = vec3(0.0);
+                // 2. EVENT HORIZON TRAP
+                if (r < rs * 0.95) {
                     break;
                 }
 
-                // Volumetric Accretion Disk
-                if (abs(rayPos.y) < 0.16 && r > diskInner && r < diskOuter) {
-                    float alpha = smoothstep(diskOuter, diskInner + 0.5, r) * smoothstep(diskInner, diskInner + 0.28, r);
-                    alpha *= smoothstep(0.16, 0.0, abs(rayPos.y));
+                // 3. ACCRETION DISK (Volumetric realistic gas)
+                if (abs(rayPos.y) < 0.15 && r > diskInner && r < diskOuter) {
+                    float alpha = smoothstep(diskOuter, diskInner + 0.5, r) * smoothstep(diskInner, diskInner + 0.3, r);
+                    alpha *= smoothstep(0.15, 0.0, abs(rayPos.y));
 
                     float angle = atan(rayPos.z, rayPos.x);
-                    vec3 noiseCoord = vec3(angle * 4.0 - u_time * 2.1, r * 3.6, u_time * 0.35);
+
+                    vec3 noiseCoord = vec3(angle * 4.0 - flowTime * 2.0, r * 3.5, flowTime * 0.3);
                     float gasDetail = fbm(noiseCoord);
 
+                    // RELATIVISTIC DOPPLER BEAMING
                     vec3 velocity = normalize(vec3(-rayPos.z, 0.0, rayPos.x));
-                    float doppler = 1.0 + dot(rayDir, velocity) * 1.85;
-                    float density = alpha * gasDetail * 0.52 * doppler;
+                    float doppler = 1.0 + dot(rayDir, velocity) * 1.8;
 
-                    float heat = clamp((diskOuter - r) / (diskOuter - diskInner), 0.0, 1.0);
+                    float density = alpha * gasDetail * 0.5 * doppler;
+
+                    float heat = (diskOuter - r) / (diskOuter - diskInner);
                     vec3 baseColor;
                     vec3 shiftColor;
 
                     if (u_palette < 0.5) {
-                        // 0: Gargantua Gold-Orange
-                        baseColor = mix(vec3(1.0, 0.22, 0.02), vec3(1.0, 0.92, 0.82), pow(heat, 1.45));
-                        shiftColor = mix(vec3(1.0, 0.12, 0.0), vec3(0.45, 0.82, 1.0), doppler * 0.3);
+                        // 0: Original Gargantua Gold-Orange
+                        baseColor = mix(vec3(1.0, 0.2, 0.01), vec3(1.0, 0.9, 0.8), pow(heat, 1.5));
+                        shiftColor = mix(vec3(1.0, 0.1, 0.0), vec3(0.4, 0.8, 1.0), doppler * 0.3);
                     } else if (u_palette < 1.5) {
-                        // 1: Quasar Cyan-Blue
+                        // 1: Armstrong White
+                        baseColor = mix(vec3(0.65, 0.72, 0.82), vec3(1.0, 1.0, 1.0), pow(heat, 1.3));
+                        shiftColor = mix(vec3(0.85, 0.82, 0.78), vec3(0.85, 0.95, 1.0), doppler * 0.3);
+                    } else if (u_palette < 2.5) {
+                        // 2: Quasar Cyan
                         baseColor = mix(vec3(0.04, 0.35, 1.0), vec3(0.88, 0.98, 1.0), pow(heat, 1.4));
                         shiftColor = mix(vec3(0.1, 0.4, 1.0), vec3(0.6, 1.0, 0.9), doppler * 0.32);
-                    } else {
-                        // 2: Crimson Nova
+                    } else if (u_palette < 3.5) {
+                        // 3: Crimson Nova
                         baseColor = mix(vec3(0.85, 0.02, 0.18), vec3(1.0, 0.78, 0.92), pow(heat, 1.5));
                         shiftColor = mix(vec3(1.0, 0.05, 0.1), vec3(0.85, 0.4, 1.0), doppler * 0.3);
+                    } else {
+                        // 4: Violet Pulsar
+                        baseColor = mix(vec3(0.45, 0.05, 0.95), vec3(0.98, 0.88, 1.0), pow(heat, 1.45));
+                        shiftColor = mix(vec3(0.8, 0.1, 1.0), vec3(0.3, 0.9, 1.0), doppler * 0.3);
                     }
 
-                    vec3 c = baseColor * shiftColor * density * 3.6;
+                    vec3 c = baseColor * shiftColor * density * 3.5;
+
                     diskGlow += c * transmittance;
                     transmittance *= (1.0 - density * 0.6);
 
-                    if (transmittance <= 0.01) break;
+                    if (transmittance <= 0.01) {
+                        break;
+                    }
                 }
 
-                if (r > 13.5) {
-                    col = getSky(rayDir, u_time, forward, u_warpSpeed) * transmittance;
+                // 4. Escape into Pure Pitch-Black Void (#000000)
+                if (r > escapeRadius && dot(rayPos, rayDir) > 0.0) {
                     break;
                 }
             }
 
-            // Relativistic Photon Sphere Ring (Einstein Ring at r ~ 1.5 Rs)
-            float photonRing = exp(-pow((minR - rs * 1.48) * 14.0, 2.0)) * 0.55 * transmittance;
-            vec3 ringTint = (u_palette < 0.5) ? vec3(1.0, 0.75, 0.45) : (u_palette < 1.5 ? vec3(0.5, 0.88, 1.0) : vec3(1.0, 0.35, 0.55));
+            // Pure black background: only diskGlow contributes to final color
+            vec3 col = diskGlow;
 
-            col += diskGlow + ringTint * photonRing;
-
-            // ACES Filmic Tonemapping & Gamma
+            // Cinematic ACES-like Tonemapping & Gamma Correction (Original)
             col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
-            col = pow(max(col, vec3(0.0)), vec3(1.0 / 2.2));
+            col = pow(max(col, vec3(0.0)), vec3(1.0/2.2));
 
             gl_FragColor = vec4(col, 1.0);
         }
     `;
 
     // =========================================================================
-    // MODULE 2: WEBGL ENGINE WITH ADAPTIVE DPI, PINCH/SCROLL ZOOM & FPS MONITOR
+    // MODULE 2: WEBGL ENGINE WITH ADAPTIVE DPI, PINCH/SCROLL ZOOM & TELEMETRY
     // =========================================================================
     class SingularityEngine {
         constructor(canvasId) {
             this.canvas = document.getElementById(canvasId);
-            this.gl = this.canvas.getContext('webgl', { antialias: false, powerPreference: 'high-performance' });
+            this.gl = this.canvas.getContext('webgl', {
+                antialias: false,
+                depth: false,
+                stencil: false,
+                alpha: false,
+                powerPreference: 'high-performance'
+            });
+
+            this.isMobile = isAndroidOrMobileDevice();
+            this.renderScale = this.isMobile ? 0.85 : 1.0;
 
             this.mouseX = window.innerWidth * 0.5;
-            this.mouseY = window.innerHeight * 0.46;
+            this.mouseY = window.innerHeight * 0.5;
             this.targetMouseX = this.mouseX;
             this.targetMouseY = this.mouseY;
 
-            this.camDist = 7.0;
-            this.targetCamDist = 7.0;
+            // 9.5 Rs default for Android/Mobile, 8.0 Rs default for PC
+            this.defaultDist = this.getDefaultDist();
+            this.camDist = this.defaultDist;
+            this.targetCamDist = this.defaultDist;
             this.palette = 0.0;
             this.warpSpeed = 1.0;
 
-            this.isPointerDown = false;
-            this.lastPointerX = 0;
-            this.lastPointerY = 0;
             this.initialPinchDist = null;
-
             this.frameCount = 0;
             this.lastFpsCheck = performance.now();
 
             this.init();
+            this.setZoom(this.defaultDist);
             this.setupEvents();
+        }
+
+        getDefaultDist() {
+            return isAndroidOrMobileDevice() ? 9.5 : 8.0;
         }
 
         compileShader(type, source) {
@@ -490,16 +560,24 @@
             this.uWarpSpeed = this.gl.getUniformLocation(this.program, "u_warpSpeed");
 
             this.resize();
+            this.mouseX = this.canvas.width * 0.5;
+            this.mouseY = this.canvas.height * 0.5;
+            this.targetMouseX = this.mouseX;
+            this.targetMouseY = this.mouseY;
         }
 
         setupEvents() {
-            window.addEventListener('resize', () => this.resize());
+            window.addEventListener('resize', () => {
+                this.isMobile = isAndroidOrMobileDevice();
+                this.defaultDist = this.getDefaultDist();
+                this.resize();
+            });
 
             // Mouse hover / drag orbit
             window.addEventListener('mousemove', e => {
                 this.targetMouseX = e.clientX * this.dpr;
                 this.targetMouseY = e.clientY * this.dpr;
-            });
+            }, { passive: true });
 
             // Scroll wheel zoom
             window.addEventListener('wheel', e => {
@@ -535,16 +613,36 @@
         }
 
         setZoom(newDist) {
-            this.targetCamDist = Math.max(3.6, Math.min(11.5, newDist));
+            this.targetCamDist = Math.max(3.6, Math.min(13.0, newDist));
             const el = document.getElementById('distReadout');
             if (el) el.innerText = `${this.targetCamDist.toFixed(1)} Rs`;
+
+            const slider = document.getElementById('zoomSlider');
+            if (slider) slider.value = this.targetCamDist.toFixed(1);
+
+            // Update Gravitational Time Dilation Readout: gamma = 1 / sqrt(1 - Rs / r)
+            const dilationEl = document.getElementById('dilationReadout');
+            if (dilationEl) {
+                const gamma = 1.0 / Math.sqrt(Math.max(0.05, 1.0 - (1.0 / this.targetCamDist)));
+                dilationEl.innerText = `${gamma.toFixed(2)}x`;
+            }
         }
 
         resize() {
-            // Cap pixel ratio at 1.35x so heavy 135-step raymarching stays locked at 60+ FPS on mobile & 4K screens
-            this.dpr = Math.min(window.devicePixelRatio || 1, 1.35);
-            this.canvas.width = Math.floor(window.innerWidth * this.dpr);
-            this.canvas.height = Math.floor(window.innerHeight * this.dpr);
+            const rawDpr = window.devicePixelRatio || 1;
+            const maxDpr = this.isMobile ? 0.95 : 1.25;
+            const prevDpr = this.dpr || 1;
+
+            this.dpr = Math.min(rawDpr, maxDpr) * this.renderScale;
+
+            const ratio = this.dpr / prevDpr;
+            this.mouseX *= ratio;
+            this.mouseY *= ratio;
+            this.targetMouseX *= ratio;
+            this.targetMouseY *= ratio;
+
+            this.canvas.width = Math.max(1, Math.floor(window.innerWidth * this.dpr));
+            this.canvas.height = Math.max(1, Math.floor(window.innerHeight * this.dpr));
             this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
         }
 
@@ -554,12 +652,33 @@
                 const fps = Math.min(144, Math.round((this.frameCount * 1000) / (time - this.lastFpsCheck)));
                 const fpsEl = document.getElementById('fpsCounter');
                 if (fpsEl) fpsEl.innerText = `${fps} FPS`;
+
+                // Update live inclination readout based on vertical orbit
+                const tiltEl = document.getElementById('tiltReadout');
+                if (tiltEl && this.canvas.height > 0) {
+                    const normY = (this.mouseY / this.canvas.height) - 0.5;
+                    const camH = 0.3 + normY * 6.0;
+                    const deg = Math.atan2(camH, this.camDist) * (180 / Math.PI);
+                    tiltEl.innerText = `${deg >= 0 ? '+' : ''}${deg.toFixed(1)}°`;
+                }
+
+                // Dynamic Resolution Scaling on Android/Mobile
+                if (this.isMobile) {
+                    if (fps < 48 && this.renderScale > 0.62) {
+                        this.renderScale = Math.max(0.60, this.renderScale - 0.06);
+                        this.resize();
+                    } else if (fps >= 58 && this.renderScale < 0.88) {
+                        this.renderScale = Math.min(0.90, this.renderScale + 0.03);
+                        this.resize();
+                    }
+                }
+
                 this.frameCount = 0;
                 this.lastFpsCheck = time;
             }
 
-            this.mouseX += (this.targetMouseX - this.mouseX) * 0.06;
-            this.mouseY += (this.targetMouseY - this.mouseY) * 0.06;
+            this.mouseX += (this.targetMouseX - this.mouseX) * 0.05;
+            this.mouseY += (this.targetMouseY - this.mouseY) * 0.05;
             this.camDist += (this.targetCamDist - this.camDist) * 0.08;
 
             this.gl.uniform2f(this.uResolution, this.canvas.width, this.canvas.height);
@@ -578,13 +697,51 @@
     requestAnimationFrame((t) => engine.render(t));
 
     // =========================================================================
-    // MODULE 3: INTERACTIVE HUD CONTROLS & AUDIO LIFECYCLE
+    // MODULE 3: DYNAMIC THEME-REACTIVE HUD & AUDIO LIFECYCLE
     // =========================================================================
     const startOverlay = document.getElementById('startOverlay');
     const bgMusic = document.getElementById('bgMusic');
     const audioClock = document.getElementById('audioClock');
     let isExperienceActive = false;
     let isHudHidden = false;
+
+    const PALETTE_THEMES = [
+        {
+            title: "SINGULARITY // GARGANTUA",
+            color: "#f97316",
+            rgb: "249, 115, 22",
+            text: "#fdba74",
+            btnText: "#000000"
+        },
+        {
+            title: "SINGULARITY // ARMSTRONG",
+            color: "#f8fafc",
+            rgb: "248, 250, 252",
+            text: "#ffffff",
+            btnText: "#000000"
+        },
+        {
+            title: "SINGULARITY // QUASAR CYAN",
+            color: "#06b6d4",
+            rgb: "6, 182, 212",
+            text: "#67e8f9",
+            btnText: "#000000"
+        },
+        {
+            title: "SINGULARITY // CRIMSON NOVA",
+            color: "#f43f5e",
+            rgb: "244, 63, 94",
+            text: "#fda4af",
+            btnText: "#ffffff"
+        },
+        {
+            title: "SINGULARITY // VIOLET PULSAR",
+            color: "#a855f7",
+            rgb: "168, 85, 247",
+            text: "#d8b4fe",
+            btnText: "#ffffff"
+        }
+    ];
 
     function setEqAnimation(playing) {
         document.querySelectorAll('.eq-bar').forEach(bar => {
@@ -655,13 +812,25 @@
 
     function setSpectralPalette(idx) {
         engine.palette = idx;
-        [0, 1, 2].forEach(i => {
+        const theme = PALETTE_THEMES[idx] || PALETTE_THEMES[0];
+
+        // Dynamically update CSS custom properties across the entire HUD
+        const root = document.documentElement;
+        root.style.setProperty('--accent-color', theme.color);
+        root.style.setProperty('--accent-rgb', theme.rgb);
+        root.style.setProperty('--accent-text', theme.text);
+        root.style.setProperty('--accent-btn-text', theme.btnText);
+
+        const titleEl = document.getElementById('hudModeTitle');
+        if (titleEl) titleEl.innerText = theme.title;
+
+        [0, 1, 2, 3, 4].forEach(i => {
             const btn = document.getElementById(`palBtn${i}`);
             if (!btn) return;
             if (i === idx) {
-                btn.className = "flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-bold bg-orange-500 text-black transition cursor-pointer";
+                btn.className = "shrink-0 px-2.5 py-1 rounded-lg text-[11px] pal-btn-active transition cursor-pointer";
             } else {
-                btn.className = "flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer";
+                btn.className = "shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-semibold text-gray-300 hover:text-white transition cursor-pointer";
             }
         });
     }
@@ -670,24 +839,29 @@
         engine.setZoom(engine.targetCamDist + delta);
     }
 
-    const WARP_STATES = [
-        { mult: 1.0, label: "⚡ WARP: 1.0x" },
-        { mult: 2.2, label: "⚡ WARP: 2.2x" },
-        { mult: 0.0, label: "🌌 WARP: OFF" }
+    function onSliderZoom(val) {
+        engine.setZoom(parseFloat(val));
+    }
+
+    const SPIN_STATES = [
+        { mult: 1.0, label: "⚡ SPIN: 1.0x" },
+        { mult: 2.2, label: "⚡ SPIN: 2.2x" },
+        { mult: 0.35, label: "⚡ SPIN: 0.3x" }
     ];
     let warpIdx = 0;
 
     function cycleWarpSpeed() {
-        warpIdx = (warpIdx + 1) % WARP_STATES.length;
-        engine.warpSpeed = WARP_STATES[warpIdx].mult;
+        warpIdx = (warpIdx + 1) % SPIN_STATES.length;
+        engine.warpSpeed = SPIN_STATES[warpIdx].mult;
         const btn = document.getElementById('warpToggleBtn');
-        if (btn) btn.innerText = WARP_STATES[warpIdx].label;
+        if (btn) btn.innerText = SPIN_STATES[warpIdx].label;
     }
 
     function resetCameraOrbit() {
         engine.targetMouseX = engine.canvas.width * 0.5;
-        engine.targetMouseY = engine.canvas.height * 0.46;
-        engine.setZoom(7.0);
+        engine.targetMouseY = engine.canvas.height * 0.5;
+        // Resets to 9.5 Rs on Android/Mobile, 8.0 Rs on PC
+        engine.setZoom(engine.getDefaultDist());
     }
 
     function toggleHudVisibility() {
